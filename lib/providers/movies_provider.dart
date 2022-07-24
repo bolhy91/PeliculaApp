@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:peliculas_app_flutter/models/cast.dart';
+import 'package:peliculas_app_flutter/models/credits_response.dart';
 import 'package:peliculas_app_flutter/models/movie.dart';
 import 'package:peliculas_app_flutter/models/now_playing_response.dart';
 import 'package:peliculas_app_flutter/models/popularity_response.dart';
@@ -15,6 +17,8 @@ class MovieProvider extends ChangeNotifier {
   List<Movie> onDisplayPopularity = [];
 
   int _popularPage = 0;
+
+  Map<int, List<Cast>> moviesCast = {};
 
   MovieProvider() {
     // ignore: avoid_print
@@ -43,5 +47,14 @@ class MovieProvider extends ChangeNotifier {
         {'api_key': _apiKey, 'language': _lenguage, 'page': '$page'});
     var response = await http.get(url);
     return response.body;
+  }
+
+  Future<List<Cast>> getMovieCast(int movieId) async {
+    if (moviesCast.containsKey(movieId)) return moviesCast[movieId]!;
+    final response = await _getJsonData('3/movie/$movieId/credits');
+    final credits = CreditsResponse.fromJson(response);
+    moviesCast[movieId] = credits.cast;
+
+    return credits.cast;
   }
 }

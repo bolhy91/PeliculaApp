@@ -19,7 +19,9 @@ class DetailsScreen extends StatelessWidget {
             _Overview(
               description: movie.overview,
             ),
-            const CastingCards()
+            CastingCards(
+              movieId: movie.id,
+            )
           ]))
         ],
       ),
