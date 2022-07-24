@@ -20,7 +20,7 @@ class MovieProvider extends ChangeNotifier {
     // ignore: avoid_print
     print('Movie provider inicializado');
     _getOnDisplayMovies();
-    _getOnDisplayPopularity();
+    getOnDisplayPopularity();
   }
 
   _getOnDisplayMovies() async {
@@ -30,7 +30,7 @@ class MovieProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  _getOnDisplayPopularity() async {
+  getOnDisplayPopularity() async {
     _popularPage++;
     var response = await _getJsonData('3/movie/popular', _popularPage);
     final populars = PopularityResponse.fromJson(response);
