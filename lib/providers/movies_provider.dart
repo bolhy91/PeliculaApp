@@ -1,12 +1,15 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:peliculas_app_flutter/helpers/debouncer.dart';
 import 'package:peliculas_app_flutter/models/cast.dart';
 import 'package:peliculas_app_flutter/models/credits_response.dart';
 import 'package:peliculas_app_flutter/models/movie.dart';
 import 'package:peliculas_app_flutter/models/now_playing_response.dart';
 import 'package:peliculas_app_flutter/models/popularity_response.dart';
+import 'package:peliculas_app_flutter/models/search_response.dart';
 
 class MovieProvider extends ChangeNotifier {
   final String _baseUrl = 'api.themoviedb.org';
@@ -19,6 +22,12 @@ class MovieProvider extends ChangeNotifier {
   int _popularPage = 0;
 
   Map<int, List<Cast>> moviesCast = {};
+
+  final debouncer = Debouncer(duration: const Duration(milliseconds: 500));
+
+  final StreamController<List<Movie>> _streamController =
+      StreamController.broadcast();
+  Stream<List<Movie>> get suggestionStream => _streamController.stream;
 
   MovieProvider() {
     // ignore: avoid_print
@@ -56,5 +65,26 @@ class MovieProvider extends ChangeNotifier {
     moviesCast[movieId] = credits.cast;
 
     return credits.cast;
+  }
+
+  Future<List<Movie>> searchMovies(String query) async {
+    final url = Uri.https(_baseUrl, '3/search/movie',
+        {'api_key': _apiKey, 'language': _lenguage, 'query': query});
+    final response = await http.get(url);
+    final movies = SearchResponse.fromJson(response.body);
+    return movies.results;
+  }
+
+  void getSuggestionByQuery(String query) {
+    debouncer.value = '';
+    debouncer.onValue = (value) async {
+      final results = await searchMovies(value);
+      _streamController.add(results);
+    };
+    final timer = Timer.periodic(const Duration(milliseconds: 300), (_) {
+      debouncer.value = query;
+    });
+    Future.delayed(const Duration(milliseconds: 301))
+        .then((_) => timer.cancel());
   }
 }
